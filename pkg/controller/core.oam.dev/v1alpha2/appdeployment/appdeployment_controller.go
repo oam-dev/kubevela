@@ -533,7 +533,7 @@ func (r *Reconciler) applyTraffic(ctx context.Context, appd *oamcore.AppDeployme
 
 func addAppDeploymentAsOwner(child, appd metav1.Object) {
 	child.SetOwnerReferences(append(child.GetOwnerReferences(),
-		*metav1.NewControllerRef(appd, oamcore.AppDeploymentKindVersionKind)))
+		*metav1.NewControllerRef(appd, oamcore.AppDeploymentGroupVersionKind)))
 }
 
 func removeString(slice []string, s string) (result []string) {
