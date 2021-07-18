@@ -125,7 +125,7 @@ func (p *Parser) GenerateAppFile(ctx context.Context, app *v1beta1.Application) 
 func (p *Parser) parsePolicies(ctx context.Context, policies []v1beta1.AppPolicy) ([]*Workload, error) {
 	ws := []*Workload{}
 	for _, policy := range policies {
-		w, err := p.makeWorkload(ctx, policy.Name, policy.Type, types.TypePolicy, policy.Properties)
+		w, err := p.makeWorkload(ctx, policy.Name, policy.Type, types.TypePolicy, policy.Properties, "")
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func (p *Parser) parseWorkflow(ctx context.Context, workflow *v1beta1.Workflow) 
 	steps := workflow.Steps
 	ws := []*Workload{}
 	for _, step := range steps {
-		w, err := p.makeWorkload(ctx, step.Name, step.Type, types.TypeWorkflowStep, step.Properties)
+		w, err := p.makeWorkload(ctx, step.Name, step.Type, types.TypeWorkflowStep, step.Properties, "")
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +150,7 @@ func (p *Parser) parseWorkflow(ctx context.Context, workflow *v1beta1.Workflow) 
 	return ws, nil
 }
 
-func (p *Parser) makeWorkload(ctx context.Context, name, typ string, capType types.CapType, props runtime.RawExtension) (*Workload, error) {
+func (p *Parser) makeWorkload(ctx context.Context, name, typ string, capType types.CapType, props runtime.RawExtension, revisionName string) (*Workload, error) {
 	templ, err := p.tmplLoader.LoadTemplate(ctx, p.dm, p.client, typ, capType)
 	if err != nil && !kerrors.IsNotFound(err) {
 		return nil, errors.WithMessagef(err, "fetch type of %s", name)
@@ -168,6 +168,7 @@ func (p *Parser) makeWorkload(ctx context.Context, name, typ string, capType typ
 		Traits:             []*Trait{},
 		Name:               name,
 		Type:               wlType,
+		ExternalRevision:   revisionName,
 		CapabilityCategory: templ.CapabilityCategory,
 		FullTemplate:       templ,
 		Params:             settings,
@@ -179,7 +180,7 @@ func (p *Parser) makeWorkload(ctx context.Context, name, typ string, capType typ
 // parseWorkload resolve an ApplicationComponent and generate a Workload
 // containing ALL information required by an Appfile.
 func (p *Parser) parseWorkload(ctx context.Context, comp v1beta1.ApplicationComponent) (*Workload, error) {
-	workload, err := p.makeWorkload(ctx, comp.Name, comp.Type, types.TypeComponentDefinition, comp.Properties)
+	workload, err := p.makeWorkload(ctx, comp.Name, comp.Type, types.TypeComponentDefinition, comp.Properties, comp.ExternalRevision)
 	if err != nil {
 		return nil, err
 	}
